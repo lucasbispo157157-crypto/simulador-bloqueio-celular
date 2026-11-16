@@ -1,136 +1,74 @@
 <title>Simulador de Bloqueio</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Layout: ML-style yellow topbar + white card canvas. Phone mockup left, step-by-step panel right. */
 :root{
-  --ml-yellow:#fff159; --ml-blue:#3483fa; --ml-blue-dark:#2968c8; --ml-blue-soft:#e3edfb;
-  --ml-green:#00a650; --ml-green-soft:#e6f8ee; --ml-red:#ff4444; --ml-red-soft:#ffe8e8;
-  --bg:#ebebeb; --surface:#ffffff; --ink:#333333; --ink-soft:#666666; --muted:#999999;
-  --line:#e5e5e5; --line-strong:#d6d6d6;
-  --phone-bg:#1a1a1a; --screen:#f4f4f4;
-  --font-display:'Plus Jakarta Sans',system-ui,-apple-system,"Segoe UI",sans-serif;
-  --font-body:'Inter',system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* Paleta oficial do painel Zarks: fundo preto, cards grafite, verde-ciano neon como destaque */
+  --neon-cyan:#00C897; --neon-cyan-dim:rgba(0,200,151,.12); --neon-red:#E84545;
+  --bg-main:#000000; --bg-card:#1A1D21; --border-color:#2A2F35;
+  --text-primary:#FFFFFF; --text-secondary:#B0B8C8; --text-muted:#64748b;
+  --overlay:rgba(0,0,0,.72);
+  --font-display:'Inter',-apple-system,system-ui,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0f1115; --surface:#1a1c22; --ink:#f0f0f0; --ink-soft:#b8bac0; --muted:#80828a;
-    --line:#2a2c33; --line-strong:#383a42;
-    --ml-blue-soft:#17233d; --ml-green-soft:#0f2a1d; --ml-red-soft:#3a1414;
-    --phone-bg:#000; --screen:#0a0a0c;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0f1115; --surface:#1a1c22; --ink:#f0f0f0; --ink-soft:#b8bac0; --muted:#80828a;
-  --line:#2a2c33; --line-strong:#383a42;
-  --ml-blue-soft:#17233d; --ml-green-soft:#0f2a1d; --ml-red-soft:#3a1414;
-  --phone-bg:#000; --screen:#0a0a0c;
-  color-scheme:dark;
-}
+/* Este simulador adota deliberadamente o tema escuro do painel; não inverte em light mode. */
+:root{ color-scheme:dark; }
 
 *{box-sizing:border-box}
 body{
-  margin:0; background:var(--bg); color:var(--ink);
-  font-family:var(--font-body); font-size:14px; line-height:1.45;
+  margin:0; min-height:100vh; background:var(--bg-main); font-family:var(--font-display);
+  display:flex; align-items:center; justify-content:center; padding:24px 16px;
 }
 
-/* ---------- Topbar (ML signature yellow) ---------- */
-.topbar{
-  background:var(--ml-yellow);
-  padding-left:max(16px, env(safe-area-inset-left,0px));
-  padding-right:max(16px, env(safe-area-inset-right,0px));
-  padding-block:0;
-}
-body::before{
-  content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:10; background:var(--ml-yellow);
-}
-.topbar-inner{
-  max-width:1120px; margin:0 auto; display:flex; align-items:center; gap:10px; height:52px;
-  padding-top:env(safe-area-inset-top,0px);
-}
-.topbar-logo{
-  width:26px; height:26px; border-radius:7px; background:var(--ml-blue); display:flex; align-items:center; justify-content:center;
-  flex-shrink:0;
-}
-.topbar-logo svg{width:15px; height:15px}
-.topbar-name{font-family:var(--font-display); font-weight:700; font-size:15px; color:#2d2d2d; letter-spacing:-.01em}
-.topbar-tag{
-  margin-left:auto; font-size:11px; font-weight:700; color:#2d2d2d; background:rgba(255,255,255,.55);
-  padding:4px 10px; border-radius:20px; letter-spacing:.02em;
+.backdrop{
+  position:fixed; inset:0; background:var(--overlay); display:flex; align-items:center; justify-content:center;
+  padding:16px;
 }
 
-.page{
-  max-width:1120px; margin:0 auto;
-  padding-left:max(16px, env(safe-area-inset-left,0px));
-  padding-right:max(16px, env(safe-area-inset-right,0px));
-  padding-block:28px;
+.modal{
+  width:100%; max-width:300px; background:var(--bg-card); border:1px solid var(--border-color);
+  border-radius:16px; padding:18px 18px 20px;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(0,200,151,.06);
+  display:flex; flex-direction:column; align-items:center; gap:14px;
 }
 
-header.hero{margin-bottom:24px; max-width:680px}
-header.hero .eyebrow{
-  display:inline-flex; align-items:center; gap:6px;
-  font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ml-blue);
-  background:var(--ml-blue-soft); padding:5px 11px; border-radius:20px; margin-bottom:12px;
+.modal-title{
+  font-weight:700; font-size:13px; color:var(--text-primary); text-align:center;
+  letter-spacing:.02em; text-transform:uppercase; font-size:11px; color:var(--neon-cyan);
 }
-header.hero h1{
-  font-family:var(--font-display); font-weight:700; font-size:clamp(22px,3.6vw,28px); margin:0 0 8px;
-  letter-spacing:-.01em; color:var(--ink);
-}
-header.hero p{margin:0; color:var(--ink-soft); font-size:14px; line-height:1.6}
-
-.layout{display:grid; grid-template-columns:292px 1fr; gap:24px; align-items:start}
-@media (max-width:780px){ .layout{grid-template-columns:1fr} }
-
-/* ---------- Phone column ---------- */
-.phone-col{display:flex; flex-direction:column; align-items:center; gap:14px; position:sticky; top:16px}
-@media (max-width:780px){ .phone-col{position:static} }
 
 .mode-switch{
-  display:inline-flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:3px; gap:3px;
-  box-shadow:0 1px 2px rgba(0,0,0,.04);
+  display:inline-flex; background:var(--bg-main); border:1px solid var(--border-color); border-radius:9px;
+  padding:3px; gap:3px; width:100%;
 }
 .mode-switch button{
-  border:0; background:transparent; color:var(--ink-soft); font:inherit; font-size:13px; font-weight:600;
-  padding:7px 18px; border-radius:7px; cursor:pointer; transition:.15s; font-family:var(--font-display);
+  flex:1; border:0; background:transparent; color:var(--text-secondary); font:inherit; font-size:12.5px; font-weight:700;
+  padding:8px 0; border-radius:7px; cursor:pointer; transition:.15s;
 }
-.mode-switch button.active{background:var(--ml-blue); color:#fff}
+.mode-switch button.active{background:var(--neon-cyan); color:#001A12}
 
+/* Phone, sized to the modal width */
 .phone{
-  width:260px; background:var(--phone-bg); border-radius:36px; padding:9px;
-  box-shadow:0 24px 48px -16px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.08);
-  position:relative;
+  width:100%; aspect-ratio:9/15.5; background:#000; border:1px solid var(--border-color); border-radius:28px; padding:8px;
+  position:relative; box-shadow:0 10px 24px rgba(0,0,0,.4);
 }
 .phone::before{
-  content:""; position:absolute; top:9px; left:50%; transform:translateX(-50%);
-  width:80px; height:16px; background:var(--phone-bg); border-radius:0 0 12px 12px; z-index:3;
+  content:""; position:absolute; top:8px; left:50%; transform:translateX(-50%);
+  width:62px; height:13px; background:#000; border-radius:0 0 10px 10px; z-index:3;
 }
 .screen{
-  background:linear-gradient(175deg,#2b2f3a,#161820 55%, #0c0d12); border-radius:28px; overflow:hidden; position:relative;
-  min-height:480px; display:flex; flex-direction:column; align-items:center;
-  padding:44px 18px 22px;
+  width:100%; height:100%; background:radial-gradient(120% 90% at 50% 0%, #10151a, #000 70%);
+  border-radius:21px; display:flex; flex-direction:column; align-items:center;
+  padding:34px 14px 16px; overflow:hidden;
 }
-.clock{color:#fff; text-align:center; margin-bottom:20px}
-.clock .time{font-family:var(--font-display); font-size:38px; font-weight:700; line-height:1; letter-spacing:-.02em}
-.clock .date{font-size:11.5px; color:#9ea2ae; margin-top:6px; text-transform:capitalize; font-weight:500}
+.clock{color:var(--text-primary); text-align:center; margin-bottom:14px}
+.clock .time{font-size:27px; font-weight:700; line-height:1; letter-spacing:-.02em; font-family:var(--font-mono)}
+.clock .date{font-size:9.5px; color:var(--text-muted); margin-top:5px; text-transform:capitalize; font-weight:500}
 
-.dots-row{display:flex; gap:9px; justify-content:center; height:11px; margin-bottom:20px}
-.dots-row .d{width:9px; height:9px; border-radius:50%; background:#4a4e5c; transition:.12s}
-.dots-row .d.filled{background:#fff; transform:scale(1.15)}
-.dots-row .d.err{background:var(--ml-red)}
+.dots-row{display:flex; gap:7px; justify-content:center; height:9px; margin-bottom:14px}
+.dots-row .d{width:7px; height:7px; border-radius:50%; background:var(--border-color); transition:.12s}
+.dots-row .d.filled{background:var(--neon-cyan); transform:scale(1.15); box-shadow:0 0 6px var(--neon-cyan-dim)}
+.dots-row .d.err{background:var(--neon-red)}
 
-.keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:11px; width:100%}
-.keypad button{
-  aspect-ratio:1; border-radius:50%; border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.07); color:#fff;
-  font-family:var(--font-display); font-size:18px; font-weight:600; cursor:pointer; transition:.08s;
-  display:flex; align-items:center; justify-content:center;
-}
-.keypad button:active{transform:scale(.93); background:rgba(255,255,255,.14)}
-.keypad button.wide{font-size:11px; font-weight:600; color:#9ea2ae; background:transparent; border-color:transparent}
-.keypad button.wide:active{background:rgba(255,255,255,.06)}
-
-.pattern-wrap{position:relative; width:216px; height:216px}
+.pattern-wrap{position:relative; width:100%; max-width:150px; aspect-ratio:1; margin:0 auto}
 .pattern-wrap svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
 .pattern-grid{
   position:absolute; inset:0; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
@@ -138,164 +76,105 @@ header.hero p{margin:0; color:var(--ink-soft); font-size:14px; line-height:1.6}
 }
 .pnode{width:100%; height:100%; display:flex; align-items:center; justify-content:center}
 .pnode .dot{
-  width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,.3); background:rgba(255,255,255,.04);
+  width:15px; height:15px; border-radius:50%; border:1.5px solid var(--border-color); background:rgba(255,255,255,.03);
   transition:.1s; display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-mono); font-size:10px; font-weight:600; color:rgba(255,255,255,.4);
+  font-family:var(--font-mono); font-size:8px; font-weight:600; color:var(--text-muted);
 }
-.pnode.active .dot{background:var(--ml-blue); border-color:var(--ml-blue); transform:scale(1.2); box-shadow:0 0 0 7px rgba(52,131,250,.22)}
-.pnode.err .dot{background:var(--ml-red); border-color:var(--ml-red)}
-.pattern-hint{color:#80838f; font-size:11.5px; margin-top:14px; text-align:center; line-height:1.5}
+.pnode.active .dot{background:var(--neon-cyan); border-color:var(--neon-cyan); transform:scale(1.2); box-shadow:0 0 0 5px var(--neon-cyan-dim); color:#001A12}
+.pnode.err .dot{background:var(--neon-red); border-color:var(--neon-red)}
 
-.pattern-keypad{
-  display:grid; grid-template-columns:repeat(3,52px); grid-template-rows:repeat(3,44px); gap:7px;
-  margin-top:16px; justify-content:center;
-}
-.pattern-keypad button{
-  border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.07); color:#fff;
-  font-family:var(--font-display); font-weight:700; font-size:15px; cursor:pointer; transition:.1s;
-}
-.pattern-keypad button:active{transform:scale(.93)}
-.pattern-keypad button.used{background:rgba(52,131,250,.3); border-color:var(--ml-blue); color:#bcd4ff}
-.pattern-actions{display:flex; gap:7px; width:174px; margin-top:9px}
-.pattern-actions button{
-  flex:1; padding:8px 6px; border-radius:8px; font-size:11px; font-weight:700; font-family:var(--font-display);
-  cursor:pointer; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#c7cad3;
-}
-.pattern-actions button.confirm{background:var(--ml-blue); border-color:var(--ml-blue); color:#fff}
+.status-line{margin-top:10px; font-size:11px; font-weight:700; height:14px; text-align:center; font-family:var(--font-mono)}
+.status-line.ok{color:var(--neon-cyan)}
+.status-line.bad{color:var(--neon-red)}
+.status-line.neutral{color:var(--text-muted)}
 
-.status-line{margin-top:14px; font-size:13px; font-weight:700; height:18px; text-align:center; font-family:var(--font-display)}
-.status-line.ok{color:#5be08a}
-.status-line.bad{color:#ff6b6b}
-.status-line.neutral{color:#6a6e79}
+/* Controls BELOW the phone — this is the actual input area */
+.controls{width:100%; display:flex; flex-direction:column; align-items:center; gap:10px}
+.controls .hint{font-size:11px; color:var(--text-secondary); text-align:center; font-weight:500}
 
-.reset-row{display:flex; gap:8px; width:100%}
-.reset-row button{
-  flex:1; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-size:12px;
-  font-weight:600; padding:9px 10px; border-radius:8px; cursor:pointer; font-family:var(--font-display);
+.keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:100%}
+.keypad button{
+  aspect-ratio:1.5; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-main); color:var(--text-primary);
+  font-family:var(--font-mono); font-size:16px; font-weight:700; cursor:pointer; transition:.08s;
+}
+.keypad button:active{transform:scale(.93); background:var(--neon-cyan); color:#001A12; border-color:var(--neon-cyan)}
+.keypad button.wide{font-size:10.5px; font-weight:700; color:var(--text-muted)}
+.keypad button.used{background:var(--neon-cyan-dim); border-color:var(--neon-cyan); color:var(--neon-cyan)}
+
+.action-row{display:flex; gap:8px; width:100%}
+.action-row button{
+  flex:1; padding:10px 8px; border-radius:10px; font-size:12px; font-weight:700; font-family:var(--font-display);
+  cursor:pointer; border:1px solid var(--border-color); background:var(--bg-main); color:var(--text-primary);
   transition:.12s;
 }
-.reset-row button:hover{border-color:var(--ml-blue); color:var(--ml-blue)}
-.reset-row button.primary{background:var(--ml-blue); border-color:var(--ml-blue); color:#fff}
-.reset-row button.primary:hover{background:var(--ml-blue-dark); color:#fff}
-
-/* ---------- Explanation panel ---------- */
-.panel-col{display:flex; flex-direction:column; gap:14px; min-width:0}
-.card{
-  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px 22px;
-  box-shadow:0 1px 2px rgba(0,0,0,.03);
-}
-.card h2{
-  font-family:var(--font-display); font-size:14.5px; font-weight:700; display:flex; align-items:center; gap:10px;
-  margin:0 0 4px; color:var(--ink);
-}
-.card h2 .n{
-  width:24px; height:24px; border-radius:7px; background:var(--ml-blue); color:#fff;
-  font-family:var(--font-mono); font-size:12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
-}
-
-.field{margin-bottom:12px; margin-top:14px}
-.field:first-of-type{margin-top:16px}
-.field .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); font-weight:700; margin-bottom:6px}
-.field .v{
-  font-family:var(--font-mono); font-size:12.5px; background:var(--ml-blue-soft); border:1px solid var(--line);
-  color:var(--ml-blue-dark);
-  border-radius:7px; padding:9px 11px; word-break:break-all; min-height:18px; line-height:1.5;
-}
-:root[data-theme="dark"] .field .v{color:#8fb4ff}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .field .v{color:#8fb4ff} }
-.field .v.empty{color:var(--muted); font-family:var(--font-body); font-style:italic; background:var(--bg); border-color:var(--line)}
-.field .sub{font-size:12px; color:var(--ink-soft); margin-top:7px; line-height:1.55}
-
-.steps{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:12px}
-.steps li{display:grid; grid-template-columns:22px 1fr; gap:11px; font-size:13px; line-height:1.6; color:var(--ink)}
-.steps li .b{
-  width:22px; height:22px; border-radius:50%; background:var(--ml-green-soft); color:var(--ml-green);
-  font-family:var(--font-mono); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:1px;
-}
-.steps li b{font-weight:700}
-.steps li code{
-  font-family:var(--font-mono); font-size:11.5px; background:var(--bg); padding:1px 5px; border-radius:4px; color:var(--ml-blue-dark);
-}
-
-.pill-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
-.pill{font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:20px; background:var(--ml-blue-soft); color:var(--ml-blue-dark); font-family:var(--font-display)}
-.pill.good{background:var(--ml-green-soft); color:var(--ml-green)}
-.pill.bad{background:var(--ml-red-soft); color:#e03131}
+.action-row button:hover{border-color:var(--neon-cyan); color:var(--neon-cyan)}
+.action-row button.primary{background:var(--neon-cyan); border-color:var(--neon-cyan); color:#001A12}
+.action-row button.primary:hover{color:#001A12}
+.action-row button.primary:active{background:#00a97f}
 
 footer.note{
-  font-size:12px; color:var(--ink-soft); line-height:1.65; margin-top:6px; max-width:74ch;
-  padding:16px 18px; background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  font-size:10.5px; color:var(--text-muted); line-height:1.5; text-align:center; max-width:280px;
 }
-footer.note b{color:var(--ink)}
 </style>
 
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="topbar-logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff159" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-    <div class="topbar-name">Simulador&nbsp;de&nbsp;Bloqueio</div>
-    <div class="topbar-tag">COMO FUNCIONA</div>
-  </div>
-</div>
+<div class="backdrop">
+  <div class="modal">
+    <div class="modal-title">Simulador de bloqueio</div>
 
-<div class="page">
-  <header class="hero">
-    <div class="eyebrow">🔐 Segurança Android</div>
-    <h1>Bloqueio por PIN e Padrão, passo a passo</h1>
-    <p>Teste um PIN ou desenhe um padrão no celular simulado ao lado. Em tempo real, o painel mostra exatamente o que o sistema faz com o que você digitou — do toque na tela até o hash salvo no aparelho.</p>
-  </header>
+    <div class="mode-switch" role="tablist">
+      <button id="tabPin" class="active" role="tab" aria-selected="true">PIN</button>
+      <button id="tabPattern" role="tab" aria-selected="false">Padrão</button>
+    </div>
 
-  <div class="layout">
-    <div class="phone-col">
-      <div class="mode-switch" role="tablist">
-        <button id="tabPin" class="active" role="tab" aria-selected="true">PIN</button>
-        <button id="tabPattern" role="tab" aria-selected="false">Padrão</button>
-      </div>
-
-      <div class="phone">
-        <div class="screen">
-          <div class="clock">
-            <div class="time" id="clockTime">--:--</div>
-            <div class="date" id="clockDate">—</div>
-          </div>
-
-          <div id="pinMode">
-            <div class="dots-row" id="pinDots"></div>
-            <div class="keypad" id="keypad"></div>
-          </div>
-
-          <div id="patternMode" hidden>
-            <div class="pattern-wrap" id="patternWrap">
-              <svg id="patternSvg" viewBox="0 0 216 216"><polyline id="patternLine" points="" fill="none" stroke="#3483fa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <div class="pattern-grid" id="patternGrid"></div>
-            </div>
-            <div class="pattern-keypad" id="patternKeypad"></div>
-            <div class="pattern-actions">
-              <button type="button" id="btnPatternUndo">voltar</button>
-              <button type="button" id="btnPatternConfirm" class="confirm">confirmar</button>
-            </div>
-            <div class="pattern-hint">Digite os números na ordem do seu desenho<br>(ver numeração no grid acima)</div>
-          </div>
-
-          <div class="status-line neutral" id="statusLine">&nbsp;</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="clock">
+          <div class="time" id="clockTime">--:--</div>
+          <div class="date" id="clockDate">—</div>
         </div>
-      </div>
 
-      <div class="reset-row">
-        <button id="btnReset">Limpar</button>
-        <button id="btnSetAsCorrect" class="primary">Definir como correta</button>
+        <div id="pinMode">
+          <div class="dots-row" id="pinDots"></div>
+        </div>
+
+        <div id="patternMode" hidden>
+          <div class="pattern-wrap" id="patternWrap">
+            <svg id="patternSvg" viewBox="0 0 150 150"><polyline id="patternLine" points="" fill="none" stroke="#00C897" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div class="pattern-grid" id="patternGrid"></div>
+          </div>
+        </div>
+
+        <div class="status-line neutral" id="statusLine">&nbsp;</div>
       </div>
     </div>
 
-    <div class="panel-col" id="panelCol"></div>
-  </div>
+    <div class="controls">
+      <div class="hint" id="controlsHint">Digite o PIN (mín. 4 dígitos)</div>
 
-  <footer class="note">
-    <b>Sobre a simulação:</b> roda só no seu navegador — nada é enviado para fora, e nenhum dado é salvo. O comportamento (hash, salt, armazenamento em área protegida do sistema) segue como o Android realmente implementa bloqueio de tela desde a versão 4.4+, usando <code style="font-family:monospace">gatekeeperd</code> e um bloco de hardware isolado (TEE/StrongBox) quando disponível. O hash aqui é simplificado para fins didáticos — não é o algoritmo real.
-  </footer>
+      <div id="pinControls">
+        <div class="keypad" id="keypad"></div>
+      </div>
+
+      <div id="patternControls" hidden style="width:100%">
+        <div class="keypad" id="patternKeypad"></div>
+      </div>
+
+      <div class="action-row">
+        <button type="button" id="btnUndo">apagar</button>
+        <button type="button" id="btnConfirm" class="primary">desbloquear</button>
+      </div>
+      <div class="action-row">
+        <button type="button" id="btnReset">limpar</button>
+        <button type="button" id="btnSetAsCorrect">definir como senha</button>
+      </div>
+    </div>
+
+    <footer class="note">Roda só no seu navegador — nada é enviado nem salvo.</footer>
+  </div>
 </div>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <script>
 (function(){
@@ -306,46 +185,28 @@ footer.note b{color:var(--ink)}
     var hh = String(now.getHours()).padStart(2,'0');
     var mm = String(now.getMinutes()).padStart(2,'0');
     document.getElementById('clockTime').textContent = hh+':'+mm;
-    var days=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+    var days=['dom','seg','ter','qua','qui','sex','sáb'];
     var months=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-    document.getElementById('clockDate').textContent = days[now.getDay()]+', '+now.getDate()+' de '+months[now.getMonth()];
+    document.getElementById('clockDate').textContent = days[now.getDay()]+', '+now.getDate()+' '+months[now.getMonth()];
   }
   paintClock(); setInterval(paintClock, 15000);
 
-  function sha256ish(str){
-    var h1 = 5381, h2 = 52711;
-    for (var i=0;i<str.length;i++){
-      var c = str.charCodeAt(i);
-      h1 = ((h1 << 5) + h1 + c) >>> 0;
-      h2 = ((h2 << 5) ^ h2 ^ c) >>> 0;
-    }
-    var out = '';
-    for (var k=0;k<8;k++){
-      h1 = ((h1<<5)+h1 + k) >>> 0; h2 = ((h2<<3)^h2^k) >>> 0;
-      out += (h1 ^ h2).toString(16).padStart(8,'0');
-    }
-    return out.slice(0,64);
-  }
-  function randomHex(len){
-    var s=''; var chars='0123456789abcdef';
-    for(var i=0;i<len;i++) s += chars[Math.floor(Math.random()*16)];
-    return s;
-  }
-
   var state = {
     mode: 'pin',
-    salt: randomHex(16),
     correctPin: '1234',
     correctPattern: [0,1,2,5,8],
     pinBuffer: '',
-    patternPath: [],
-    dragging: false
+    patternPath: []
   };
 
   var tabPin = document.getElementById('tabPin');
   var tabPattern = document.getElementById('tabPattern');
   var pinMode = document.getElementById('pinMode');
   var patternMode = document.getElementById('patternMode');
+  var pinControls = document.getElementById('pinControls');
+  var patternControls = document.getElementById('patternControls');
+  var controlsHint = document.getElementById('controlsHint');
+  var statusEl = document.getElementById('statusLine');
 
   function setMode(mode){
     state.mode = mode;
@@ -354,19 +215,22 @@ footer.note b{color:var(--ink)}
       tabPin.classList.add('active'); tabPin.setAttribute('aria-selected','true');
       tabPattern.classList.remove('active'); tabPattern.setAttribute('aria-selected','false');
       pinMode.hidden=false; patternMode.hidden=true;
+      pinControls.hidden=false; patternControls.hidden=true;
+      controlsHint.textContent = 'Digite o PIN (mín. 4 dígitos)';
     } else {
       tabPattern.classList.add('active'); tabPattern.setAttribute('aria-selected','true');
       tabPin.classList.remove('active'); tabPin.setAttribute('aria-selected','false');
       pinMode.hidden=true; patternMode.hidden=false;
+      pinControls.hidden=true; patternControls.hidden=false;
+      controlsHint.textContent = 'Toque os números na ordem do desenho';
     }
-    renderPanel();
   }
   tabPin.addEventListener('click', function(){ setMode('pin'); });
   tabPattern.addEventListener('click', function(){ setMode('pattern'); });
 
+  // ---------- PIN ----------
   var pinDotsEl = document.getElementById('pinDots');
   var keypadEl = document.getElementById('keypad');
-  var statusEl = document.getElementById('statusLine');
 
   function renderPinDots(){
     pinDotsEl.innerHTML='';
@@ -385,27 +249,29 @@ footer.note b{color:var(--ink)}
     else if(k==='⌫'){ btn.className='wide'; btn.textContent='apagar'; }
     else { btn.textContent=k; }
     btn.addEventListener('click', function(){
-      if(k==='⌫'){ state.pinBuffer = state.pinBuffer.slice(0,-1); renderPinDots(); renderPanel(); setStatus('',''); return; }
+      if(k==='⌫'){ state.pinBuffer = state.pinBuffer.slice(0,-1); renderPinDots(); setStatus('',''); return; }
       if(k==='') return;
       if(state.pinBuffer.length>=8) return;
       state.pinBuffer += k;
       renderPinDots();
-      renderPanel();
-      if(state.pinBuffer.length>=4){ checkPin(); } else { setStatus('',''); }
+      setStatus('','');
     });
     keypadEl.appendChild(btn);
   });
   renderPinDots();
 
   function checkPin(){
-    if(state.pinBuffer.length < state.correctPin.length) return;
+    if(state.pinBuffer.length < 4){
+      setStatus('Digite ao menos 4 dígitos','bad');
+      return;
+    }
     if(state.pinBuffer === state.correctPin){
       setStatus('Desbloqueado','ok');
       flashDots(true);
-    } else if(state.pinBuffer.length >= state.correctPin.length) {
+    } else {
       setStatus('PIN incorreto','bad');
       flashDots(false);
-      setTimeout(function(){ state.pinBuffer=''; renderPinDots(); renderPanel(); }, 500);
+      setTimeout(function(){ state.pinBuffer=''; renderPinDots(); }, 500);
     }
   }
   function flashDots(ok){
@@ -414,9 +280,9 @@ footer.note b{color:var(--ink)}
     setTimeout(function(){ dots.forEach(function(d){ d.classList.remove('err'); }); }, 480);
   }
 
+  // ---------- Pattern ----------
   var patternGrid = document.getElementById('patternGrid');
   var patternLine = document.getElementById('patternLine');
-  var patternWrap = document.getElementById('patternWrap');
   var patternKeypad = document.getElementById('patternKeypad');
   var nodes = [];
   for(var i=0;i<9;i++){
@@ -428,7 +294,6 @@ footer.note b{color:var(--ink)}
     nodes.push(n);
   }
 
-  // Numeric keypad 1-9 mirrors the grid: pressing a digit picks that grid point
   var keypadBtns = [];
   for(var k=1;k<=9;k++){
     (function(digit){
@@ -442,7 +307,7 @@ footer.note b{color:var(--ink)}
 
   function nodeCenter(idx){
     var col = idx%3, row = Math.floor(idx/3);
-    var cellW = 216/3;
+    var cellW = 150/3;
     return { x: cellW*col + cellW/2, y: cellW*row + cellW/2 };
   }
 
@@ -454,29 +319,17 @@ footer.note b{color:var(--ink)}
   }
 
   function addPatternPoint(idx){
-    if(state.patternPath.indexOf(idx) !== -1) return; // já usado, Android não permite repetir
+    if(state.patternPath.indexOf(idx) !== -1) return;
     state.patternPath.push(idx);
     updatePatternVisual();
-    renderPanel();
     setStatus('','');
   }
 
-  document.getElementById('btnPatternUndo').addEventListener('click', function(){
-    state.patternPath.pop();
-    updatePatternVisual();
-    renderPanel();
-    setStatus('','');
-  });
-
-  document.getElementById('btnPatternConfirm').addEventListener('click', function(){
+  function checkPattern(){
     if(state.patternPath.length < 4){
-      setStatus('Padrão muito curto (mín. 4 pontos)','bad');
+      setStatus('Mín. 4 pontos','bad');
       return;
     }
-    checkPattern();
-  });
-
-  function checkPattern(){
     var same = state.patternPath.length===state.correctPattern.length &&
       state.patternPath.every(function(v,i){ return v===state.correctPattern[i]; });
     if(same){
@@ -486,11 +339,12 @@ footer.note b{color:var(--ink)}
       nodes.forEach(function(n,i){ if(state.patternPath.indexOf(i)!==-1) n.classList.add('err'); });
       setTimeout(function(){
         nodes.forEach(function(n){ n.classList.remove('err'); });
-        state.patternPath=[]; updatePatternVisual(); renderPanel();
+        state.patternPath=[]; updatePatternVisual();
       }, 650);
     }
   }
 
+  // ---------- shared ----------
   function setStatus(text, cls){
     statusEl.textContent = text || ' ';
     statusEl.className = 'status-line ' + (cls||'neutral');
@@ -501,144 +355,46 @@ footer.note b{color:var(--ink)}
     renderPinDots(); updatePatternVisual();
     setStatus('','');
   }
+
   document.getElementById('btnReset').addEventListener('click', clearAttempt);
+
+  document.getElementById('btnUndo').addEventListener('click', function(){
+    if(state.mode==='pin'){
+      state.pinBuffer = state.pinBuffer.slice(0,-1);
+      renderPinDots();
+    } else {
+      state.patternPath.pop();
+      updatePatternVisual();
+    }
+    setStatus('','');
+  });
+
+  document.getElementById('btnConfirm').addEventListener('click', function(){
+    if(state.mode==='pin'){ checkPin(); } else { checkPattern(); }
+  });
 
   document.getElementById('btnSetAsCorrect').addEventListener('click', function(){
     if(state.mode==='pin'){
       if(state.pinBuffer.length>=4){
         state.correctPin = state.pinBuffer;
-        state.salt = randomHex(16);
         state.pinBuffer='';
         renderPinDots();
         setStatus('Nova senha definida','ok');
-        renderPanel();
       } else {
-        setStatus('Digite ao menos 4 dígitos antes','bad');
+        setStatus('Digite 4+ dígitos antes','bad');
       }
     } else {
       if(state.patternPath.length>=4){
         state.correctPattern = state.patternPath.slice();
-        state.salt = randomHex(16);
         state.patternPath=[];
         updatePatternVisual();
         setStatus('Novo padrão definido','ok');
-        renderPanel();
       } else {
-        setStatus('Desenhe um padrão com 4+ pontos antes','bad');
+        setStatus('Toque 4+ pontos antes','bad');
       }
     }
   });
 
-  var panelCol = document.getElementById('panelCol');
-  function gridLabel(idx){ return idx+1; }
-
-  var stepCounter = 0;
-  function step(html){
-    stepCounter++;
-    return '<li><span class="b">'+stepCounter+'</span><span>'+html+'</span></li>';
-  }
-  function card(n, title, bodyParts){
-    return '<div class="card"><h2><span class="n">'+n+'</span>'+title+'</h2>'+bodyParts.join('')+'</div>';
-  }
-  function field(label, value, emptyHint){
-    var isEmpty = !value;
-    return '<div class="field"><div class="k">'+label+'</div><div class="v'+(isEmpty?' empty':'')+'">'+
-      (isEmpty ? (emptyHint||'—') : escapeHtml(value)) + '</div></div>';
-  }
-  function pill(text, kind, suffix){
-    var cls = kind? (' '+kind) : '';
-    return '<span class="pill'+cls+'">'+escapeHtml(text)+(suffix?(' — '+suffix):'')+'</span>';
-  }
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; });
-  }
-
-  function renderPanelInner(){
-    var html = '';
-
-    if(state.mode === 'pin'){
-      var buf = state.pinBuffer;
-      var bufDisplay = buf.length ? buf.split('').join(' · ') : '';
-      var hash = buf.length ? sha256ish(buf + state.salt) : '';
-      var correctHash = sha256ish(state.correctPin + state.salt);
-
-      html += card(1, 'O que você digitou', [
-        field('Toques no teclado (ordem)', bufDisplay, 'nenhum dígito ainda — toque no teclado'),
-        field('Tamanho exigido pelo Android', 'mínimo 4 dígitos · máximo 16', null)
-      ]);
-
-      html += card(2, 'O que o sistema faz com isso', [
-        '<ul class="steps">'+
-          step('O dígito pressionado vira um caractere numérico em um <b>buffer temporário</b> na memória — nada é gravado em disco ainda.') +
-          step('Ao enviar, o app de bloqueio concatena o PIN com um <code>salt</code> aleatório único deste aparelho, gerado na primeira configuração da senha.') +
-          step('O resultado passa por uma <b>função de hash de via única</b> (na prática, o Android usa um esquema baseado em scrypt/SHA, simplificado aqui para ilustrar).') +
-          step('Só o <b>hash</b> é comparado com o hash salvo — o PIN em texto puro nunca fica armazenado em lugar nenhum.') +
-        '</ul>'
-      ]);
-
-      html += card(3, 'Dado simulado gerado agora', [
-        field('Salt do aparelho (fixo, gerado uma vez)', state.salt, null),
-        field('PIN + salt (entrada da função hash)', buf.length? (buf+state.salt) : '', 'aguardando digitação'),
-        field('Hash resultante (o que seria comparado)', hash, 'aguardando 4+ dígitos'),
-        field('Hash da senha correta atual', correctHash, null)
-      ]);
-
-      var matches = buf.length>=state.correctPin.length && buf===state.correctPin;
-      html += card(4, 'Resultado da comparação', [
-        '<div class="pill-row">'+
-          pill(buf.length? 'tentativa: '+bufDisplay : 'tentativa: (vazia)', null) +
-          pill('hash bateu?', matches? 'good':'bad', matches? 'SIM':'ainda não') +
-        '</div>',
-        '<p class="field sub">O Android nunca compara os números diretamente — ele compara <b>dois hashes</b>. Se forem idênticos, matematicamente é extremamente improvável que o PIN seja diferente, e o aparelho libera o acesso.</p>'
-      ]);
-
-    } else {
-      var path = state.patternPath;
-      var labels = path.map(gridLabel);
-      var pathStr = labels.length ? labels.join(' → ') : '';
-      var encoded = path.join('');
-      var hash = path.length ? sha256ish(encoded + state.salt) : '';
-      var correctLabels = state.correctPattern.map(gridLabel).join(' → ');
-      var correctHash = sha256ish(state.correctPattern.join('') + state.salt);
-
-      html += card(1, 'O que você desenhou', [
-        field('Sequência de pontos digitados', pathStr, 'nenhum ponto ainda — toque nos números abaixo da grade'),
-        field('Grade de referência do Android', '1 2 3 / 4 5 6 / 7 8 9 (numeração interna, não exibida na tela real)', null)
-      ]);
-
-      html += card(2, 'O que o sistema faz com isso', [
-        '<ul class="steps">'+
-          step('Cada ponto da grade 3×3 tem um <b>índice fixo de 0 a 8</b>. O desenho vira uma sequência desses índices, na ordem em que você passou o dedo.') +
-          step('Essa sequência de números é tratada exatamente como uma senha: é concatenada com o <code>salt</code> do aparelho.') +
-          step('O resultado passa pela mesma <b>função de hash de via única</b> usada no PIN — padrão e PIN usam o mesmo mecanismo por baixo, só muda o que vira "número".') +
-          step('O hash fica guardado numa área protegida do sistema (<code>gatekeeperd</code>), isolada do resto do Android.') +
-        '</ul>'
-      ]);
-
-      html += card(3, 'Dado simulado gerado agora', [
-        field('Índices do caminho (0-8, como o Android enxerga)', encoded, 'aguardando desenho'),
-        field('Salt do aparelho', state.salt, null),
-        field('Caminho + salt (entrada do hash)', path.length? (encoded+state.salt):'', 'aguardando 4+ pontos'),
-        field('Hash resultante', hash, 'aguardando 4+ pontos'),
-        field('Hash do padrão correto atual', correctHash, null)
-      ]);
-
-      var samePath = path.length===state.correctPattern.length && path.every(function(v,i){return v===state.correctPattern[i];});
-      html += card(4, 'Resultado da comparação', [
-        '<div class="pill-row">'+
-          pill(pathStr? 'tentativa: '+pathStr : 'tentativa: (vazia)', null) +
-          pill('hash bateu?', samePath? 'good':'bad', samePath? 'SIM':'ainda não') +
-        '</div>',
-        '<p class="field sub">Padrão correto atual: <b>'+correctLabels+'</b> — mude desenhando um novo e clicando em "Definir como correta".</p>'
-      ]);
-    }
-
-    panelCol.innerHTML = html;
-  }
-
-  function renderPanel(){ stepCounter = 0; renderPanelInner(); }
-
   updatePatternVisual();
-  renderPanel();
 })();
 </script>
