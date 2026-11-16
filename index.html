@@ -1,105 +1,136 @@
 <title>Simulador de Bloqueio</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Layout: phone mockup on the left, "how it works" panel on the right; stacks on mobile */
+/* Layout: ML-style yellow topbar + white card canvas. Phone mockup left, step-by-step panel right. */
 :root{
-  --bg:#f2f1ee; --surface:#ffffff; --ink:#1b1b1f; --muted:#6b6b72;
-  --line:#dddbd4; --accent:#2f6fed; --accent-soft:#e8eefd;
-  --phone-bg:#0c0d10; --screen:#121318; --key:#1c1e24; --key-fg:#f4f4f6;
-  --good:#1f9d55; --bad:#d64545;
-  --font-display:'Space Grotesk',system-ui,sans-serif;
-  --font-body:'Inter',system-ui,sans-serif;
+  --ml-yellow:#fff159; --ml-blue:#3483fa; --ml-blue-dark:#2968c8; --ml-blue-soft:#e3edfb;
+  --ml-green:#00a650; --ml-green-soft:#e6f8ee; --ml-red:#ff4444; --ml-red-soft:#ffe8e8;
+  --bg:#ebebeb; --surface:#ffffff; --ink:#333333; --ink-soft:#666666; --muted:#999999;
+  --line:#e5e5e5; --line-strong:#d6d6d6;
+  --phone-bg:#1a1a1a; --screen:#f4f4f4;
+  --font-display:'Plus Jakarta Sans',system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-body:'Inter',system-ui,-apple-system,"Segoe UI",sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#111113; --surface:#1b1b1e; --ink:#f2f1ee; --muted:#9a9aa0;
-    --line:#2d2d31; --accent:#6f9bff; --accent-soft:#1d2740;
-    --phone-bg:#000; --screen:#0a0b0e; --key:#222329; --key-fg:#f4f4f6;
-    --good:#4cc47a; --bad:#ff6b6b;
+    --bg:#0f1115; --surface:#1a1c22; --ink:#f0f0f0; --ink-soft:#b8bac0; --muted:#80828a;
+    --line:#2a2c33; --line-strong:#383a42;
+    --ml-blue-soft:#17233d; --ml-green-soft:#0f2a1d; --ml-red-soft:#3a1414;
+    --phone-bg:#000; --screen:#0a0a0c;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#111113; --surface:#1b1b1e; --ink:#f2f1ee; --muted:#9a9aa0;
-  --line:#2d2d31; --accent:#6f9bff; --accent-soft:#1d2740;
-  --phone-bg:#000; --screen:#0a0b0e; --key:#222329; --key-fg:#f4f4f6;
-  --good:#4cc47a; --bad:#ff6b6b;
+  --bg:#0f1115; --surface:#1a1c22; --ink:#f0f0f0; --ink-soft:#b8bac0; --muted:#80828a;
+  --line:#2a2c33; --line-strong:#383a42;
+  --ml-blue-soft:#17233d; --ml-green-soft:#0f2a1d; --ml-red-soft:#3a1414;
+  --phone-bg:#000; --screen:#0a0a0c;
   color-scheme:dark;
 }
 
 *{box-sizing:border-box}
 body{
   margin:0; background:var(--bg); color:var(--ink);
-  font-family:var(--font-body);
+  font-family:var(--font-body); font-size:14px; line-height:1.45;
+}
+
+/* ---------- Topbar (ML signature yellow) ---------- */
+.topbar{
+  background:var(--ml-yellow);
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+  padding-block:0;
+}
+body::before{
+  content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:10; background:var(--ml-yellow);
+}
+.topbar-inner{
+  max-width:1120px; margin:0 auto; display:flex; align-items:center; gap:10px; height:52px;
+  padding-top:env(safe-area-inset-top,0px);
+}
+.topbar-logo{
+  width:26px; height:26px; border-radius:7px; background:var(--ml-blue); display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.topbar-logo svg{width:15px; height:15px}
+.topbar-name{font-family:var(--font-display); font-weight:700; font-size:15px; color:#2d2d2d; letter-spacing:-.01em}
+.topbar-tag{
+  margin-left:auto; font-size:11px; font-weight:700; color:#2d2d2d; background:rgba(255,255,255,.55);
+  padding:4px 10px; border-radius:20px; letter-spacing:.02em;
+}
+
+.page{
+  max-width:1120px; margin:0 auto;
   padding-left:max(16px, env(safe-area-inset-left,0px));
   padding-right:max(16px, env(safe-area-inset-right,0px));
   padding-block:28px;
 }
-h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0}
-.wrap{max-width:1040px; margin:0 auto}
 
-header.top{margin-bottom:22px}
-header.top .eyebrow{
-  font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
-  font-weight:600; margin-bottom:8px;
+header.hero{margin-bottom:24px; max-width:680px}
+header.hero .eyebrow{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ml-blue);
+  background:var(--ml-blue-soft); padding:5px 11px; border-radius:20px; margin-bottom:12px;
 }
-header.top h1{font-size:clamp(22px,4vw,30px); font-weight:600}
-header.top p{margin:8px 0 0; color:var(--muted); max-width:62ch; line-height:1.5; font-size:14px}
-
-.layout{
-  display:grid; grid-template-columns:300px 1fr; gap:28px; align-items:start;
+header.hero h1{
+  font-family:var(--font-display); font-weight:700; font-size:clamp(22px,3.6vw,28px); margin:0 0 8px;
+  letter-spacing:-.01em; color:var(--ink);
 }
-@media (max-width:760px){ .layout{ grid-template-columns:1fr } }
+header.hero p{margin:0; color:var(--ink-soft); font-size:14px; line-height:1.6}
 
-/* ---------- Phone mockup ---------- */
-.phone-col{display:flex; flex-direction:column; align-items:center; gap:14px}
+.layout{display:grid; grid-template-columns:292px 1fr; gap:24px; align-items:start}
+@media (max-width:780px){ .layout{grid-template-columns:1fr} }
+
+/* ---------- Phone column ---------- */
+.phone-col{display:flex; flex-direction:column; align-items:center; gap:14px; position:sticky; top:16px}
+@media (max-width:780px){ .phone-col{position:static} }
+
 .mode-switch{
-  display:inline-flex; background:var(--surface); border:1px solid var(--line); border-radius:999px;
-  padding:4px; gap:4px;
+  display:inline-flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:3px; gap:3px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
 }
 .mode-switch button{
-  border:0; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:600;
-  padding:7px 16px; border-radius:999px; cursor:pointer; transition:.15s;
+  border:0; background:transparent; color:var(--ink-soft); font:inherit; font-size:13px; font-weight:600;
+  padding:7px 18px; border-radius:7px; cursor:pointer; transition:.15s; font-family:var(--font-display);
 }
-.mode-switch button.active{background:var(--accent); color:#fff}
+.mode-switch button.active{background:var(--ml-blue); color:#fff}
 
 .phone{
-  width:252px; background:var(--phone-bg); border-radius:38px; padding:10px;
-  box-shadow:0 20px 50px -20px rgba(0,0,0,.45);
+  width:260px; background:var(--phone-bg); border-radius:36px; padding:9px;
+  box-shadow:0 24px 48px -16px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.08);
   position:relative;
 }
-.phone::before{ /* notch */
-  content:""; position:absolute; top:10px; left:50%; transform:translateX(-50%);
-  width:84px; height:18px; background:var(--phone-bg); border-radius:0 0 14px 14px; z-index:3;
+.phone::before{
+  content:""; position:absolute; top:9px; left:50%; transform:translateX(-50%);
+  width:80px; height:16px; background:var(--phone-bg); border-radius:0 0 12px 12px; z-index:3;
 }
 .screen{
-  background:var(--screen); border-radius:30px; overflow:hidden; position:relative;
-  min-height:470px; display:flex; flex-direction:column; align-items:center;
-  padding:46px 18px 22px;
+  background:linear-gradient(175deg,#2b2f3a,#161820 55%, #0c0d12); border-radius:28px; overflow:hidden; position:relative;
+  min-height:480px; display:flex; flex-direction:column; align-items:center;
+  padding:44px 18px 22px;
 }
-.clock{color:#fff; text-align:center; margin-bottom:22px}
-.clock .time{font-family:var(--font-display); font-size:40px; font-weight:600; line-height:1}
-.clock .date{font-size:12px; color:#9a9aa6; margin-top:6px; text-transform:capitalize}
+.clock{color:#fff; text-align:center; margin-bottom:20px}
+.clock .time{font-family:var(--font-display); font-size:38px; font-weight:700; line-height:1; letter-spacing:-.02em}
+.clock .date{font-size:11.5px; color:#9ea2ae; margin-top:6px; text-transform:capitalize; font-weight:500}
 
-.dots-row{display:flex; gap:10px; justify-content:center; height:12px; margin-bottom:22px}
-.dots-row .d{width:9px; height:9px; border-radius:50%; background:#44454e; transition:.12s}
+.dots-row{display:flex; gap:9px; justify-content:center; height:11px; margin-bottom:20px}
+.dots-row .d{width:9px; height:9px; border-radius:50%; background:#4a4e5c; transition:.12s}
 .dots-row .d.filled{background:#fff; transform:scale(1.15)}
-.dots-row .d.err{background:var(--bad)}
+.dots-row .d.err{background:var(--ml-red)}
 
-/* PIN keypad */
-.keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; width:100%}
+.keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:11px; width:100%}
 .keypad button{
-  aspect-ratio:1; border-radius:50%; border:1px solid #2a2b32; background:var(--key); color:var(--key-fg);
-  font-family:var(--font-display); font-size:19px; font-weight:500; cursor:pointer;
-  display:flex; align-items:center; justify-content:center; transition:.08s;
+  aspect-ratio:1; border-radius:50%; border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.07); color:#fff;
+  font-family:var(--font-display); font-size:18px; font-weight:600; cursor:pointer; transition:.08s;
+  display:flex; align-items:center; justify-content:center;
 }
-.keypad button:active{transform:scale(.93); background:#30323a}
-.keypad button.wide{font-size:12px; font-weight:600; color:#9a9aa6; background:transparent; border-color:transparent}
-.keypad button.wide:active{background:#1d1e24}
+.keypad button:active{transform:scale(.93); background:rgba(255,255,255,.14)}
+.keypad button.wide{font-size:11px; font-weight:600; color:#9ea2ae; background:transparent; border-color:transparent}
+.keypad button.wide:active{background:rgba(255,255,255,.06)}
 
-/* Pattern grid */
-.pattern-wrap{position:relative; width:220px; height:220px}
+.pattern-wrap{position:relative; width:216px; height:216px}
 .pattern-wrap svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
 .pattern-grid{
   position:absolute; inset:0; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
@@ -107,76 +138,110 @@ header.top p{margin:8px 0 0; color:var(--muted); max-width:62ch; line-height:1.5
 }
 .pnode{width:100%; height:100%; display:flex; align-items:center; justify-content:center}
 .pnode .dot{
-  width:18px; height:18px; border-radius:50%; border:2px solid #52535c; background:transparent; transition:.1s;
+  width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,.3); background:rgba(255,255,255,.04);
+  transition:.1s; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-size:10px; font-weight:600; color:rgba(255,255,255,.4);
 }
-.pnode.active .dot{background:var(--accent); border-color:var(--accent); transform:scale(1.2); box-shadow:0 0 0 6px color-mix(in srgb, var(--accent) 25%, transparent)}
-.pnode.err .dot{background:var(--bad); border-color:var(--bad)}
-.pattern-hint{color:#75767e; font-size:12px; margin-top:16px; text-align:center}
+.pnode.active .dot{background:var(--ml-blue); border-color:var(--ml-blue); transform:scale(1.2); box-shadow:0 0 0 7px rgba(52,131,250,.22)}
+.pnode.err .dot{background:var(--ml-red); border-color:var(--ml-red)}
+.pattern-hint{color:#80838f; font-size:11.5px; margin-top:14px; text-align:center; line-height:1.5}
 
-.status-line{
-  margin-top:16px; font-size:13px; font-weight:600; height:18px; text-align:center;
+.pattern-keypad{
+  display:grid; grid-template-columns:repeat(3,52px); grid-template-rows:repeat(3,44px); gap:7px;
+  margin-top:16px; justify-content:center;
 }
-.status-line.ok{color:var(--good)}
-.status-line.bad{color:var(--bad)}
-.status-line.neutral{color:#75767e}
+.pattern-keypad button{
+  border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.07); color:#fff;
+  font-family:var(--font-display); font-weight:700; font-size:15px; cursor:pointer; transition:.1s;
+}
+.pattern-keypad button:active{transform:scale(.93)}
+.pattern-keypad button.used{background:rgba(52,131,250,.3); border-color:var(--ml-blue); color:#bcd4ff}
+.pattern-actions{display:flex; gap:7px; width:174px; margin-top:9px}
+.pattern-actions button{
+  flex:1; padding:8px 6px; border-radius:8px; font-size:11px; font-weight:700; font-family:var(--font-display);
+  cursor:pointer; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#c7cad3;
+}
+.pattern-actions button.confirm{background:var(--ml-blue); border-color:var(--ml-blue); color:#fff}
 
-.reset-row{display:flex; gap:8px}
+.status-line{margin-top:14px; font-size:13px; font-weight:700; height:18px; text-align:center; font-family:var(--font-display)}
+.status-line.ok{color:#5be08a}
+.status-line.bad{color:#ff6b6b}
+.status-line.neutral{color:#6a6e79}
+
+.reset-row{display:flex; gap:8px; width:100%}
 .reset-row button{
-  border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-size:12.5px;
-  font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer;
+  flex:1; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-size:12px;
+  font-weight:600; padding:9px 10px; border-radius:8px; cursor:pointer; font-family:var(--font-display);
+  transition:.12s;
 }
-.reset-row button:hover{border-color:var(--accent); color:var(--accent)}
+.reset-row button:hover{border-color:var(--ml-blue); color:var(--ml-blue)}
+.reset-row button.primary{background:var(--ml-blue); border-color:var(--ml-blue); color:#fff}
+.reset-row button.primary:hover{background:var(--ml-blue-dark); color:#fff}
 
 /* ---------- Explanation panel ---------- */
-.panel-col{display:flex; flex-direction:column; gap:16px; min-width:0}
+.panel-col{display:flex; flex-direction:column; gap:14px; min-width:0}
 .card{
-  background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px 22px;
+  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px 22px;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
 }
-.card h2{font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; margin-bottom:4px}
+.card h2{
+  font-family:var(--font-display); font-size:14.5px; font-weight:700; display:flex; align-items:center; gap:10px;
+  margin:0 0 4px; color:var(--ink);
+}
 .card h2 .n{
-  width:22px; height:22px; border-radius:7px; background:var(--accent-soft); color:var(--accent);
-  font-family:var(--font-mono); font-size:12px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+  width:24px; height:24px; border-radius:7px; background:var(--ml-blue); color:#fff;
+  font-family:var(--font-mono); font-size:12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
 }
-.card p.lead{color:var(--muted); font-size:13.5px; line-height:1.55; margin:8px 0 14px}
 
-.field{margin-bottom:12px}
-.field:last-child{margin-bottom:0}
-.field .k{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600; margin-bottom:5px}
+.field{margin-bottom:12px; margin-top:14px}
+.field:first-of-type{margin-top:16px}
+.field .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); font-weight:700; margin-bottom:6px}
 .field .v{
-  font-family:var(--font-mono); font-size:13px; background:var(--bg); border:1px solid var(--line);
-  border-radius:8px; padding:9px 11px; word-break:break-all; min-height:18px; line-height:1.5;
+  font-family:var(--font-mono); font-size:12.5px; background:var(--ml-blue-soft); border:1px solid var(--line);
+  color:var(--ml-blue-dark);
+  border-radius:7px; padding:9px 11px; word-break:break-all; min-height:18px; line-height:1.5;
 }
-.field .v.empty{color:var(--muted); font-style:normal}
-.field .sub{font-size:12px; color:var(--muted); margin-top:5px; line-height:1.5}
+:root[data-theme="dark"] .field .v{color:#8fb4ff}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .field .v{color:#8fb4ff} }
+.field .v.empty{color:var(--muted); font-family:var(--font-body); font-style:italic; background:var(--bg); border-color:var(--line)}
+.field .sub{font-size:12px; color:var(--ink-soft); margin-top:7px; line-height:1.55}
 
-.steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px}
-.steps li{
-  display:grid; grid-template-columns:20px 1fr; gap:10px; font-size:13px; line-height:1.55; color:var(--ink);
-}
+.steps{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:12px}
+.steps li{display:grid; grid-template-columns:22px 1fr; gap:11px; font-size:13px; line-height:1.6; color:var(--ink)}
 .steps li .b{
-  width:20px; height:20px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
-  font-family:var(--font-mono); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;
-  margin-top:1px;
+  width:22px; height:22px; border-radius:50%; background:var(--ml-green-soft); color:var(--ml-green);
+  font-family:var(--font-mono); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:1px;
 }
-.steps li b{font-weight:600}
-.steps li .muted{color:var(--muted)}
-
-.pill-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
-.pill{
-  font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:999px; background:var(--accent-soft); color:var(--accent);
+.steps li b{font-weight:700}
+.steps li code{
+  font-family:var(--font-mono); font-size:11.5px; background:var(--bg); padding:1px 5px; border-radius:4px; color:var(--ml-blue-dark);
 }
-.pill.good{background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good)}
-.pill.bad{background:color-mix(in srgb, var(--bad) 16%, transparent); color:var(--bad)}
 
-footer.note{font-size:12px; color:var(--muted); line-height:1.6; margin-top:4px; max-width:70ch}
+.pill-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
+.pill{font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:20px; background:var(--ml-blue-soft); color:var(--ml-blue-dark); font-family:var(--font-display)}
+.pill.good{background:var(--ml-green-soft); color:var(--ml-green)}
+.pill.bad{background:var(--ml-red-soft); color:#e03131}
+
+footer.note{
+  font-size:12px; color:var(--ink-soft); line-height:1.65; margin-top:6px; max-width:74ch;
+  padding:16px 18px; background:var(--surface); border:1px solid var(--line); border-radius:10px;
+}
 footer.note b{color:var(--ink)}
 </style>
 
-<div class="wrap">
-  <header class="top">
-    <div class="eyebrow">Como funciona</div>
-    <h1>Bloqueio por PIN e Padrão</h1>
-    <p>Teste um PIN ou desenhe um padrão no celular simulado. Ao lado, veja exatamente o que o Android faz com o que você digitou ou desenhou — do toque na tela até o hash salvo no aparelho.</p>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff159" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+    <div class="topbar-name">Simulador&nbsp;de&nbsp;Bloqueio</div>
+    <div class="topbar-tag">COMO FUNCIONA</div>
+  </div>
+</div>
+
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">🔐 Segurança Android</div>
+    <h1>Bloqueio por PIN e Padrão, passo a passo</h1>
+    <p>Teste um PIN ou desenhe um padrão no celular simulado ao lado. Em tempo real, o painel mostra exatamente o que o sistema faz com o que você digitou — do toque na tela até o hash salvo no aparelho.</p>
   </header>
 
   <div class="layout">
@@ -193,19 +258,22 @@ footer.note b{color:var(--ink)}
             <div class="date" id="clockDate">—</div>
           </div>
 
-          <!-- PIN mode -->
           <div id="pinMode">
             <div class="dots-row" id="pinDots"></div>
             <div class="keypad" id="keypad"></div>
           </div>
 
-          <!-- Pattern mode -->
           <div id="patternMode" hidden>
             <div class="pattern-wrap" id="patternWrap">
-              <svg id="patternSvg" viewBox="0 0 220 220"><polyline id="patternLine" points="" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg id="patternSvg" viewBox="0 0 216 216"><polyline id="patternLine" points="" fill="none" stroke="#3483fa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <div class="pattern-grid" id="patternGrid"></div>
             </div>
-            <div class="pattern-hint">Arraste o dedo (ou o mouse) pelos pontos</div>
+            <div class="pattern-keypad" id="patternKeypad"></div>
+            <div class="pattern-actions">
+              <button type="button" id="btnPatternUndo">voltar</button>
+              <button type="button" id="btnPatternConfirm" class="confirm">confirmar</button>
+            </div>
+            <div class="pattern-hint">Digite os números na ordem do seu desenho<br>(ver numeração no grid acima)</div>
           </div>
 
           <div class="status-line neutral" id="statusLine">&nbsp;</div>
@@ -214,28 +282,25 @@ footer.note b{color:var(--ink)}
 
       <div class="reset-row">
         <button id="btnReset">Limpar</button>
-        <button id="btnSetAsCorrect">Definir como senha "correta"</button>
+        <button id="btnSetAsCorrect" class="primary">Definir como correta</button>
       </div>
     </div>
 
-    <div class="panel-col" id="panelCol">
-      <!-- filled by JS -->
-    </div>
+    <div class="panel-col" id="panelCol"></div>
   </div>
 
   <footer class="note">
-    <b>Sobre a simulação:</b> isto roda só no seu navegador — nada é enviado para fora, e nenhum dado é salvo. O comportamento (hash, salt, armazenamento em área protegida do sistema) segue como o Android realmente implementa bloqueio de tela desde a versão 4.4+, usando <code>gatekeeperd</code> e um bloco de hardware isolado (TEE/StrongBox) quando disponível.
+    <b>Sobre a simulação:</b> roda só no seu navegador — nada é enviado para fora, e nenhum dado é salvo. O comportamento (hash, salt, armazenamento em área protegida do sistema) segue como o Android realmente implementa bloqueio de tela desde a versão 4.4+, usando <code style="font-family:monospace">gatekeeperd</code> e um bloco de hardware isolado (TEE/StrongBox) quando disponível. O hash aqui é simplificado para fins didáticos — não é o algoritmo real.
   </footer>
 </div>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <script>
 (function(){
   "use strict";
 
-  // ---------- Clock ----------
   function paintClock(){
     var now = new Date();
     var hh = String(now.getHours()).padStart(2,'0');
@@ -247,17 +312,13 @@ footer.note b{color:var(--ink)}
   }
   paintClock(); setInterval(paintClock, 15000);
 
-  // ---------- simple hash for simulation (NOT real crypto, just illustrative) ----------
   function sha256ish(str){
-    // djb2-based toy hash -> hex, purely for visual illustration, not real SHA-256
     var h1 = 5381, h2 = 52711;
     for (var i=0;i<str.length;i++){
       var c = str.charCodeAt(i);
       h1 = ((h1 << 5) + h1 + c) >>> 0;
       h2 = ((h2 << 5) ^ h2 ^ c) >>> 0;
     }
-    var combo = (h1.toString(16).padStart(8,'0')) + (h2.toString(16).padStart(8,'0'));
-    // stretch to look like a 64-char hex digest
     var out = '';
     for (var k=0;k<8;k++){
       h1 = ((h1<<5)+h1 + k) >>> 0; h2 = ((h2<<3)^h2^k) >>> 0;
@@ -275,13 +336,12 @@ footer.note b{color:var(--ink)}
     mode: 'pin',
     salt: randomHex(16),
     correctPin: '1234',
-    correctPattern: [0,1,2,5,8], // L shape default
+    correctPattern: [0,1,2,5,8],
     pinBuffer: '',
     patternPath: [],
     dragging: false
   };
 
-  // ---------- Tabs ----------
   var tabPin = document.getElementById('tabPin');
   var tabPattern = document.getElementById('tabPattern');
   var pinMode = document.getElementById('pinMode');
@@ -304,7 +364,6 @@ footer.note b{color:var(--ink)}
   tabPin.addEventListener('click', function(){ setMode('pin'); });
   tabPattern.addEventListener('click', function(){ setMode('pattern'); });
 
-  // ---------- PIN keypad ----------
   var pinDotsEl = document.getElementById('pinDots');
   var keypadEl = document.getElementById('keypad');
   var statusEl = document.getElementById('statusLine');
@@ -312,7 +371,7 @@ footer.note b{color:var(--ink)}
   function renderPinDots(){
     pinDotsEl.innerHTML='';
     var max = Math.max(4, state.pinBuffer.length);
-    for(var i=0;i<Math.max(4,max);i++){
+    for(var i=0;i<max;i++){
       var d=document.createElement('div');
       d.className='d'+(i<state.pinBuffer.length?' filled':'');
       pinDotsEl.appendChild(d);
@@ -332,11 +391,7 @@ footer.note b{color:var(--ink)}
       state.pinBuffer += k;
       renderPinDots();
       renderPanel();
-      if(state.pinBuffer.length>=4){
-        checkPin();
-      } else {
-        setStatus('','');
-      }
+      if(state.pinBuffer.length>=4){ checkPin(); } else { setStatus('',''); }
     });
     keypadEl.appendChild(btn);
   });
@@ -359,87 +414,67 @@ footer.note b{color:var(--ink)}
     setTimeout(function(){ dots.forEach(function(d){ d.classList.remove('err'); }); }, 480);
   }
 
-  // ---------- Pattern ----------
   var patternGrid = document.getElementById('patternGrid');
   var patternLine = document.getElementById('patternLine');
   var patternWrap = document.getElementById('patternWrap');
+  var patternKeypad = document.getElementById('patternKeypad');
   var nodes = [];
   for(var i=0;i<9;i++){
     var n = document.createElement('div');
     n.className='pnode'; n.dataset.idx=i;
-    var dot=document.createElement('div'); dot.className='dot';
+    var dot=document.createElement('div'); dot.className='dot'; dot.textContent = i+1;
     n.appendChild(dot);
     patternGrid.appendChild(n);
     nodes.push(n);
   }
 
+  // Numeric keypad 1-9 mirrors the grid: pressing a digit picks that grid point
+  var keypadBtns = [];
+  for(var k=1;k<=9;k++){
+    (function(digit){
+      var btn = document.createElement('button');
+      btn.type='button'; btn.textContent = digit;
+      btn.addEventListener('click', function(){ addPatternPoint(digit-1); });
+      patternKeypad.appendChild(btn);
+      keypadBtns.push(btn);
+    })(k);
+  }
+
   function nodeCenter(idx){
     var col = idx%3, row = Math.floor(idx/3);
-    var cellW = 220/3;
+    var cellW = 216/3;
     return { x: cellW*col + cellW/2, y: cellW*row + cellW/2 };
   }
 
   function updatePatternVisual(){
-    nodes.forEach(function(n,i){
-      n.classList.toggle('active', state.patternPath.indexOf(i) !== -1);
-    });
+    nodes.forEach(function(n,i){ n.classList.toggle('active', state.patternPath.indexOf(i) !== -1); });
+    keypadBtns.forEach(function(b,i){ b.classList.toggle('used', state.patternPath.indexOf(i) !== -1); });
     var pts = state.patternPath.map(function(i){ var c=nodeCenter(i); return c.x+','+c.y; }).join(' ');
     patternLine.setAttribute('points', pts);
-    patternLine.style.color = 'var(--accent)';
   }
 
-  function posFromEvent(e){
-    var rect = patternWrap.getBoundingClientRect();
-    var touch = e.touches && e.touches[0];
-    var cx = touch ? touch.clientX : e.clientX;
-    var cy = touch ? touch.clientY : e.clientY;
-    return { x: (cx-rect.left)/rect.width*220, y: (cy-rect.top)/rect.height*220 };
-  }
-  function nodeAt(pos){
-    for(var i=0;i<9;i++){
-      var c = nodeCenter(i);
-      var dx=c.x-pos.x, dy=c.y-pos.y;
-      if(Math.sqrt(dx*dx+dy*dy) < 26) return i;
-    }
-    return -1;
-  }
-
-  function startDrag(e){
-    e.preventDefault();
-    state.dragging = true;
-    state.patternPath = [];
-    var idx = nodeAt(posFromEvent(e));
-    if(idx!==-1) state.patternPath.push(idx);
+  function addPatternPoint(idx){
+    if(state.patternPath.indexOf(idx) !== -1) return; // já usado, Android não permite repetir
+    state.patternPath.push(idx);
     updatePatternVisual();
     renderPanel();
     setStatus('','');
   }
-  function moveDrag(e){
-    if(!state.dragging) return;
-    e.preventDefault();
-    var idx = nodeAt(posFromEvent(e));
-    if(idx!==-1 && state.patternPath.indexOf(idx)===-1){
-      state.patternPath.push(idx);
-      updatePatternVisual();
-      renderPanel();
-    }
-  }
-  function endDrag(){
-    if(!state.dragging) return;
-    state.dragging=false;
+
+  document.getElementById('btnPatternUndo').addEventListener('click', function(){
+    state.patternPath.pop();
+    updatePatternVisual();
+    renderPanel();
+    setStatus('','');
+  });
+
+  document.getElementById('btnPatternConfirm').addEventListener('click', function(){
     if(state.patternPath.length < 4){
       setStatus('Padrão muito curto (mín. 4 pontos)','bad');
-      setTimeout(function(){ state.patternPath=[]; updatePatternVisual(); renderPanel(); setStatus('',''); }, 700);
       return;
     }
     checkPattern();
-  }
-  patternWrap.addEventListener('mousedown', startDrag);
-  patternWrap.addEventListener('mousemove', moveDrag);
-  window.addEventListener('mouseup', endDrag);
-  patternWrap.addEventListener('touchstart', startDrag, {passive:false});
-  patternWrap.addEventListener('touchmove', moveDrag, {passive:false});
-  patternWrap.addEventListener('touchend', endDrag);
+  });
 
   function checkPattern(){
     var same = state.patternPath.length===state.correctPattern.length &&
@@ -494,99 +529,14 @@ footer.note b{color:var(--ink)}
     }
   });
 
-  // ---------- Right panel: explanation that reacts live ----------
   var panelCol = document.getElementById('panelCol');
+  function gridLabel(idx){ return idx+1; }
 
-  function gridLabel(idx){
-    // Android numbers pattern nodes 1-9 reading left-to-right, top-to-bottom
-    return idx+1;
+  var stepCounter = 0;
+  function step(html){
+    stepCounter++;
+    return '<li><span class="b">'+stepCounter+'</span><span>'+html+'</span></li>';
   }
-
-  function renderPanel(){
-    var html = '';
-
-    if(state.mode === 'pin'){
-      var buf = state.pinBuffer;
-      var bufDisplay = buf.length ? buf.split('').join(' · ') : '';
-      var saltedConcat = buf + state.salt;
-      var hash = buf.length ? sha256ish(saltedConcat) : '';
-      var correctHash = sha256ish(state.correctPin + state.salt);
-
-      html += card(1, 'O que você digitou', [
-        field('Toques no teclado (ordem)', bufDisplay, buf.length?'': 'nenhum dígito ainda — toque no teclado'),
-        field('Tamanho exigido', 'mínimo 4 dígitos · máximo 16 (padrão Android)', null)
-      ]);
-
-      html += card(2, 'O que o sistema faz com isso', [
-        '<ul class="steps">'+
-          step('O dígito pressionado vira um <b>caractere numérico</b> em um buffer temporário na memória — nada é gravado em disco ainda.') +
-          step('Ao enviar, o app de bloqueio concatena o PIN com um <b>salt</b> aleatório único deste aparelho, gerado na primeira configuração da senha.') +
-          step('O resultado passa por uma função de <b>hash criptográfico de via única</b> (na prática, o Android usa um esquema baseado em scrypt/SHA, aqui simplificado para ilustrar).') +
-          step('Só o <b>hash</b> é comparado com o hash salvo — o PIN em texto puro nunca fica armazenado em lugar nenhum, nem mesmo temporariamente após a checagem.') +
-        '</ul>'
-      ]);
-
-      html += card(3, 'Dado simulado gerado agora', [
-        field('Salt do aparelho (fixo, gerado uma vez)', state.salt, null),
-        field('PIN + salt (entrada da função hash)', buf.length? (buf+state.salt) : '', 'aguardando digitação'),
-        field('Hash resultante (o que seria salvo/comparado)', hash, 'aguardando 4+ dígitos'),
-        field('Hash da senha "correta" atual', correctHash, null)
-      ]);
-
-      var matches = buf.length>=state.correctPin.length && buf===state.correctPin;
-      html += card(4, 'Resultado da comparação', [
-        '<div class="pill-row">'+
-          pill(buf.length? 'tentativa: '+bufDisplay : 'tentativa: (vazia)', null) +
-          pill('hash bateu?', matches? 'good':'bad', matches? 'SIM':'ainda não') +
-        '</div>',
-        '<p class="field sub" style="margin-top:10px">O Android nunca compara os números diretamente — ele compara <b>dois hashes</b>. Se os hashes forem idênticos, matematicamente é extremamente improvável que o PIN seja diferente, então o aparelho libera o acesso.</p>'
-      ]);
-
-    } else {
-      var path = state.patternPath;
-      var labels = path.map(gridLabel);
-      var pathStr = labels.length ? labels.join(' → ') : '';
-      var encoded = path.join(''); // Android stores pattern as byte sequence of node indices
-      var saltedConcat = encoded + state.salt;
-      var hash = path.length ? sha256ish(saltedConcat) : '';
-      var correctLabels = state.correctPattern.map(gridLabel).join(' → ');
-      var correctHash = sha256ish(state.correctPattern.join('') + state.salt);
-
-      html += card(1, 'O que você desenhou', [
-        field('Sequência de pontos tocados', pathStr, path.length? '' : 'nenhum ponto ainda — arraste na grade'),
-        field('Grade de referência do Android', '1 2 3 / 4 5 6 / 7 8 9 (numeração interna, não exibida na tela real)', null)
-      ]);
-
-      html += card(2, 'O que o sistema faz com isso', [
-        '<ul class="steps">'+
-          step('Cada ponto da grade 3×3 tem um <b>índice fixo de 0 a 8</b>. O desenho vira uma sequência desses índices, na ordem em que você passou o dedo.') +
-          step('Essa sequência de números é tratada exatamente como uma senha: é concatenada com o <b>salt</b> do aparelho.') +
-          step('O resultado passa pela mesma função de <b>hash de via única</b> usada no PIN — padrão e PIN usam o mesmo mecanismo por baixo, só muda o que vira "número".') +
-          step('O hash fica guardado numa área protegida do sistema (<code>gatekeeperd</code>), isolada do resto do Android.') +
-        '</ul>'
-      ]);
-
-      html += card(3, 'Dado simulado gerado agora', [
-        field('Índices do caminho (0-8, como o Android enxerga)', encoded, 'aguardando desenho'),
-        field('Salt do aparelho', state.salt, null),
-        field('Caminho + salt (entrada do hash)', path.length? (encoded+state.salt):'', 'aguardando 4+ pontos'),
-        field('Hash resultante', hash, 'aguardando 4+ pontos'),
-        field('Hash do padrão "correto" atual', correctHash, null)
-      ]);
-
-      var samePath = path.length===state.correctPattern.length && path.every(function(v,i){return v===state.correctPattern[i];});
-      html += card(4, 'Resultado da comparação', [
-        '<div class="pill-row">'+
-          pill(pathStr? 'tentativa: '+pathStr : 'tentativa: (vazia)', null) +
-          pill('hash bateu?', samePath? 'good':'bad', samePath? 'SIM':'ainda não') +
-        '</div>',
-        '<p class="field sub" style="margin-top:10px">Padrão correto atual: <b>'+correctLabels+'</b> — mude com "Definir como senha correta" depois de desenhar um novo.</p>'
-      ]);
-    }
-
-    panelCol.innerHTML = html;
-  }
-
   function card(n, title, bodyParts){
     return '<div class="card"><h2><span class="n">'+n+'</span>'+title+'</h2>'+bodyParts.join('')+'</div>';
   }
@@ -594,11 +544,6 @@ footer.note b{color:var(--ink)}
     var isEmpty = !value;
     return '<div class="field"><div class="k">'+label+'</div><div class="v'+(isEmpty?' empty':'')+'">'+
       (isEmpty ? (emptyHint||'—') : escapeHtml(value)) + '</div></div>';
-  }
-  var stepCounter = 0;
-  function step(html){
-    stepCounter++;
-    return '<li><span class="b">'+stepCounter+'</span><span>'+html+'</span></li>';
   }
   function pill(text, kind, suffix){
     var cls = kind? (' '+kind) : '';
@@ -608,8 +553,90 @@ footer.note b{color:var(--ink)}
     return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; });
   }
 
-  var originalRenderPanel = renderPanel;
-  renderPanel = function(){ stepCounter = 0; originalRenderPanel(); };
+  function renderPanelInner(){
+    var html = '';
+
+    if(state.mode === 'pin'){
+      var buf = state.pinBuffer;
+      var bufDisplay = buf.length ? buf.split('').join(' · ') : '';
+      var hash = buf.length ? sha256ish(buf + state.salt) : '';
+      var correctHash = sha256ish(state.correctPin + state.salt);
+
+      html += card(1, 'O que você digitou', [
+        field('Toques no teclado (ordem)', bufDisplay, 'nenhum dígito ainda — toque no teclado'),
+        field('Tamanho exigido pelo Android', 'mínimo 4 dígitos · máximo 16', null)
+      ]);
+
+      html += card(2, 'O que o sistema faz com isso', [
+        '<ul class="steps">'+
+          step('O dígito pressionado vira um caractere numérico em um <b>buffer temporário</b> na memória — nada é gravado em disco ainda.') +
+          step('Ao enviar, o app de bloqueio concatena o PIN com um <code>salt</code> aleatório único deste aparelho, gerado na primeira configuração da senha.') +
+          step('O resultado passa por uma <b>função de hash de via única</b> (na prática, o Android usa um esquema baseado em scrypt/SHA, simplificado aqui para ilustrar).') +
+          step('Só o <b>hash</b> é comparado com o hash salvo — o PIN em texto puro nunca fica armazenado em lugar nenhum.') +
+        '</ul>'
+      ]);
+
+      html += card(3, 'Dado simulado gerado agora', [
+        field('Salt do aparelho (fixo, gerado uma vez)', state.salt, null),
+        field('PIN + salt (entrada da função hash)', buf.length? (buf+state.salt) : '', 'aguardando digitação'),
+        field('Hash resultante (o que seria comparado)', hash, 'aguardando 4+ dígitos'),
+        field('Hash da senha correta atual', correctHash, null)
+      ]);
+
+      var matches = buf.length>=state.correctPin.length && buf===state.correctPin;
+      html += card(4, 'Resultado da comparação', [
+        '<div class="pill-row">'+
+          pill(buf.length? 'tentativa: '+bufDisplay : 'tentativa: (vazia)', null) +
+          pill('hash bateu?', matches? 'good':'bad', matches? 'SIM':'ainda não') +
+        '</div>',
+        '<p class="field sub">O Android nunca compara os números diretamente — ele compara <b>dois hashes</b>. Se forem idênticos, matematicamente é extremamente improvável que o PIN seja diferente, e o aparelho libera o acesso.</p>'
+      ]);
+
+    } else {
+      var path = state.patternPath;
+      var labels = path.map(gridLabel);
+      var pathStr = labels.length ? labels.join(' → ') : '';
+      var encoded = path.join('');
+      var hash = path.length ? sha256ish(encoded + state.salt) : '';
+      var correctLabels = state.correctPattern.map(gridLabel).join(' → ');
+      var correctHash = sha256ish(state.correctPattern.join('') + state.salt);
+
+      html += card(1, 'O que você desenhou', [
+        field('Sequência de pontos digitados', pathStr, 'nenhum ponto ainda — toque nos números abaixo da grade'),
+        field('Grade de referência do Android', '1 2 3 / 4 5 6 / 7 8 9 (numeração interna, não exibida na tela real)', null)
+      ]);
+
+      html += card(2, 'O que o sistema faz com isso', [
+        '<ul class="steps">'+
+          step('Cada ponto da grade 3×3 tem um <b>índice fixo de 0 a 8</b>. O desenho vira uma sequência desses índices, na ordem em que você passou o dedo.') +
+          step('Essa sequência de números é tratada exatamente como uma senha: é concatenada com o <code>salt</code> do aparelho.') +
+          step('O resultado passa pela mesma <b>função de hash de via única</b> usada no PIN — padrão e PIN usam o mesmo mecanismo por baixo, só muda o que vira "número".') +
+          step('O hash fica guardado numa área protegida do sistema (<code>gatekeeperd</code>), isolada do resto do Android.') +
+        '</ul>'
+      ]);
+
+      html += card(3, 'Dado simulado gerado agora', [
+        field('Índices do caminho (0-8, como o Android enxerga)', encoded, 'aguardando desenho'),
+        field('Salt do aparelho', state.salt, null),
+        field('Caminho + salt (entrada do hash)', path.length? (encoded+state.salt):'', 'aguardando 4+ pontos'),
+        field('Hash resultante', hash, 'aguardando 4+ pontos'),
+        field('Hash do padrão correto atual', correctHash, null)
+      ]);
+
+      var samePath = path.length===state.correctPattern.length && path.every(function(v,i){return v===state.correctPattern[i];});
+      html += card(4, 'Resultado da comparação', [
+        '<div class="pill-row">'+
+          pill(pathStr? 'tentativa: '+pathStr : 'tentativa: (vazia)', null) +
+          pill('hash bateu?', samePath? 'good':'bad', samePath? 'SIM':'ainda não') +
+        '</div>',
+        '<p class="field sub">Padrão correto atual: <b>'+correctLabels+'</b> — mude desenhando um novo e clicando em "Definir como correta".</p>'
+      ]);
+    }
+
+    panelCol.innerHTML = html;
+  }
+
+  function renderPanel(){ stepCounter = 0; renderPanelInner(); }
 
   updatePatternVisual();
   renderPanel();
